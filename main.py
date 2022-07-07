@@ -10,14 +10,13 @@ app = FastAPI()
 async def get_url(short_url: str, request: Request):
 
     url_item: ShortUrl = ShortUrl.get_or_none(id=short_url)
-    UrlRedirect.new(url_item, request.client.host)
-    print(url_item.redirects_count)
 
     if not url_item:
         return CustomJSONResp(
             status_code=status.HTTP_404_NOT_FOUND
         )
 
+    UrlRedirect.new(url_item, request.client.host)
     return responses.RedirectResponse(
         url_item.url
     )
