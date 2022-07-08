@@ -26,13 +26,18 @@ class ShortUrl(BaseModel):
     id: str = CharField(max_length=6, default=generate_id, primary_key=True)
     url: str = CharField(unique=True)
     ip_requested: str = CharField()
+    created_at = DateTimeField(default=datetime.datetime.now)
 
     @classmethod
     def new(cls, url: str, ip_requested: str) -> 'ShortUrl':
-        record = cls.get_or_none(url=url)
+        record = cls.get_or_none(url=url, ip_requested=ip_requested)
         if not record:
             return cls.create(url=url, ip_requested=ip_requested)
         return record
+
+    @classmethod
+    def get_by_ip(cls, ip_requested: str):
+        return cls.select().where(cls.ip_requested == ip_requested).order_by(cls.created_at.desc())
 
     @property
     def redirects_count(self):

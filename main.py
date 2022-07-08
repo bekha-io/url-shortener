@@ -1,9 +1,13 @@
-from fastapi import FastAPI, Request, status, responses, Body
-from utils import CustomJSONResp
+from fastapi import FastAPI, Request, status, responses
+from fastapi.templating import Jinja2Templates
 
+from utils import CustomJSONResp, TemplateContext
 from database import ShortUrl, UrlRedirect
 
 app = FastAPI()
+
+
+templates = Jinja2Templates(directory="./templates")
 
 
 @app.get('/{short_url}', status_code=301)
@@ -22,7 +26,7 @@ async def get_url(short_url: str, request: Request):
     )
 
 
-@app.post("/generate", response_class=CustomJSONResp)
+@app.post("/shorten", response_class=CustomJSONResp)
 async def shorten_url(url: str, request: Request):
 
     url_item = ShortUrl.new(url, request.client.host)
@@ -32,3 +36,20 @@ async def shorten_url(url: str, request: Request):
     }
 
     return CustomJSONResp(data=item)
+
+
+@app.get('/', response_class=responses.HTMLResponse)
+async def index_page(request: Request):
+
+    ctx = TemplateContext()
+    ctx.urls = ShortUrl.get_by_ip(request.client.host)
+    ctx.total_urls = ShortUrl.select().count()
+    ctx.total_users = ShortUrl.select(ShortUrl.ip_requested).distinct().count()
+    ctx.total_redirects = UrlRedirect.select().count()
+
+    return templates.TemplateResponse(
+        'index.html', {
+            'request': request,
+            'context': ctx,
+        }
+    )

@@ -4,9 +4,11 @@ from fastapi.responses import JSONResponse
 
 
 class CustomJSONResp(JSONResponse):
-    _resp_body: dict = {}
+    _resp_body: dict
 
     def __init__(self, data: typing.Dict = None, status_code: int = 200, **kwargs):
+        self._resp_body = {}
+
         status = "success" if status_code == 200 else "error"
 
         self._resp_body['status'] = status
@@ -20,3 +22,7 @@ class CustomJSONResp(JSONResponse):
             status_code=status_code,
             **kwargs
         )
+
+
+class TemplateContext:
+    pass

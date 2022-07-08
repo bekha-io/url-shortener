@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URLShortener</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+<body>
+<section class="section">
+    <h1 class="title">URL Shortener</h1>
+    <h2 class="subtitle">
+        A simple url shortener application
+    </h2>
+    <div class="columns">
+        <div class="column is-full">
+            <div class="field has-addons">
+                <div class="control is-expanded">
+                    <input id="urlToShorten" class="input" pattern="https://.*"
+                           type="url" placeholder="Paste an URL link to shorten">
+                </div>
+                <div class="control">
+                    <a id="shortenButton" class="button is-info">
+                        Shorten!
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="urlsList" class="m-5 columns is-multiline">
+        {% for url in context.urls %}
+        <div class="column is-one-quarter">
+            <div class="card">
+                <header class="card-header">
+                    <a href="{{ url_for('get_url', short_url=url.id) }}" class="card-header-title has-text-info is-size-5">
+                        Short URL: {{ url.id }}
+                    </a>
+                    <button class="card-header-icon" aria-label="more options">
+                        <p class="has-text-grey">Visits: {{url.redirects_count}}</p>
+                    </button>
+                </header>
+
+                <div class="card-content">
+                    <div class="content" style="overflow: hidden">
+                        Long URL: <a href="{{ url.url }}">{{url.url}}</a>
+                    </div>
+                </div>
+
+                <footer class="card-footer">
+                    <p class="card-footer-item">Created at</p>
+                    <div class="card-footer-item has-text-grey">{{ url.created_at.strftime('%d.%m.%Y %H:%S') }}</div>
+                </footer>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</section>
+<nav class="mb-5 level">
+    <div class="level-item has-text-centered">
+        <div>
+            <p class="heading">Total users</p>
+            <p class="title">{{ context.total_users }}</p>
+        </div>
+    </div>
+    <div class="level-item has-text-centered">
+        <div>
+            <p class="heading">Total URLs shortened</p>
+            <p class="title">{{ context.total_urls }}</p>
+        </div>
+    </div>
+    <div class="level-item has-text-centered">
+        <div>
+            <p class="heading">Total redirects</p>
+            <p class="title">{{ context.total_redirects }}</p>
+        </div>
+    </div>
+</nav>
+
+
+<script type="text/javascript">
+
+    function isValidHttpUrl(string) {
+        let url;
+
+        try {
+            url = new URL(string);
+        } catch (_) {
+            return false;
+        }
+
+        return url.protocol === "http:" || url.protocol === "https:";
+    }
+
+    function shortenViaAjax(urlToShorten) {
+        $.ajax(
+            {
+                url: '/shorten?' + 'url=' + urlToShorten,
+                method: 'POST',
+                success: function (response) {
+                    console.log(response)
+                    if (response.data.shortUrl) {
+                        console.log(response.data.shortUrl);
+                    }
+                }
+            }
+        )
+    }
+
+    $('#shortenButton').on('click', function (event) {
+        let urlToShortenEl = $('#urlToShorten');
+        let urlToShorten = urlToShortenEl.val();
+        urlToShortenEl.val('');
+
+        if (isValidHttpUrl(urlToShorten) === true) {
+            shortenViaAjax(urlToShorten);
+            location.reload(true);
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'URL provided is not a valid url',
+            })
+        }
+
+
+    })
+</script>
+</body>
+</html>
